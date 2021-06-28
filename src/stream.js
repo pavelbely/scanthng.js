@@ -325,6 +325,7 @@ const scanCode = (opts, scope) => {
     .then(function (newStream) {
       stream = newStream;
       Utils.insertVideoElement(opts.containerId);
+      opts.instantTorch && setTorchEnabled(true);
 
       return findBarcode(opts, scope);
     });
@@ -341,7 +342,10 @@ const setTorchEnabled = (enabled) => {
 
   const track = stream.getVideoTracks()[0];
   const capabilities = track.getCapabilities();
-  if (!capabilities.torch) throw new Error('Device does not support the torch capability');
+  if (!capabilities.torch) {
+    console.error('Device does not support the torch capability');
+    return;
+  }
 
   track
     .applyConstraints({
