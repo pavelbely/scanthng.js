@@ -321,6 +321,29 @@ const findBarcodeInStream = (opts, scope) => {
 };
 
 /**
+ * Enable/disable the torch, if supported by the browser/device.
+ * The video stream must be started before using this method.
+ *
+ * @param {boolean} enabled - true if the torch should be switched on.
+ */
+const setTorchEnabled = (enabled) => {
+  if (!stream) throw new Error('Stream not ready, torch cannot be enabled');
+
+  const track = stream.getVideoTracks()[0];
+  const capabilities = track.getCapabilities();
+  if (!capabilities.torch) {
+    console.error('Device does not support the torch capability');
+    return;
+  }
+
+  track
+    .applyConstraints({
+      advanced: [{ torch: enabled }],
+    })
+    .catch((e) => console.log(e));
+};
+
+/**
  * Use webRTC to open the camera, scan for a code, and resolve the value.
  *
  * @param {Object} opts - The scanning options.
@@ -357,33 +380,12 @@ const scanCode = (opts, scope) => {
     .then((newStream) => {
       stream = newStream;
       Utils.insertVideoElement(opts.containerId);
-      opts.instantTorch && setTorchEnabled(true);
+      if (opts.instantTorch) {
+        setTorchEnabled(true);
+      }
 
       return findBarcodeInStream(opts, scope);
     });
-};
-
-/**
- * Enable/disable the torch, if supported by the browser/device.
- * The video stream must be started before using this method.
- *
- * @param {boolean} enabled - true if the torch should be switched on.
- */
-const setTorchEnabled = (enabled) => {
-  if (!stream) throw new Error('Stream not ready, torch cannot be enabled');
-
-  const track = stream.getVideoTracks()[0];
-  const capabilities = track.getCapabilities();
-  if (!capabilities.torch) {
-    console.error('Device does not support the torch capability');
-    return;
-  }
-
-  track
-    .applyConstraints({
-      advanced: [{ torch: enabled }],
-    })
-    .catch((e) => console.log(e));
 };
 
 if (typeof module !== 'undefined') {
